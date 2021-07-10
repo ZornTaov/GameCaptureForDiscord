@@ -36,11 +36,11 @@ namespace GameCaptureForDiscord
             // pictureBox1
             // 
             this.pictureBox1.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.pictureBox1.Image = GameCaptureForDiscord.Properties.Resources.R0YEeip;
+            this.pictureBox1.Image = global::GameCaptureForDiscord.Properties.Resources.R0YEeip;
             this.pictureBox1.InitialImage = null;
             this.pictureBox1.Location = new System.Drawing.Point(0, 0);
             this.pictureBox1.Name = "pictureBox1";
-            this.pictureBox1.Size = new System.Drawing.Size(501, 143);
+            this.pictureBox1.Size = new System.Drawing.Size(499, 138);
             this.pictureBox1.TabIndex = 0;
             this.pictureBox1.TabStop = false;
             // 
@@ -49,7 +49,7 @@ namespace GameCaptureForDiscord
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
-            this.ClientSize = new System.Drawing.Size(501, 143);
+            this.ClientSize = new System.Drawing.Size(499, 138);
             this.ControlBox = false;
             this.Controls.Add(this.pictureBox1);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
