@@ -46,7 +46,7 @@ jobs:
       run: mkdir _release
       
     - name: Compile the application
-      run: msbuild $env:Solution_Name /p:platform=$env:TargetPlatform /p:configuration=$env:Configuration
+      run: msbuild $env:Solution_Name /p:platform=$env:TargetPlatform /p:configuration=$env:Configuration /p:DebugSymbols=false /p:DebugType=None
       env:
         Configuration: ${{ matrix.configuration }}
         TargetPlatform: ${{ matrix.targetplatform }}
