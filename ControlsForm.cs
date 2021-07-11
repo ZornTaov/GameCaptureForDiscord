@@ -130,6 +130,7 @@ namespace GameCaptureForDiscord
 
                 if (_captureInProgress)
                 {
+                    Program.mainForm.sampleChannel.Volume = volumeSlider1.Volume;
                     Program.mainForm.wi.StartRecording();
                     Program.mainForm.wo.Play();
                 }
