@@ -23,7 +23,7 @@ on:
 jobs:
   analyze:
     name: Analyze
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     permissions:
       actions: read
       contents: read
@@ -33,10 +33,15 @@ jobs:
       fail-fast: false
       matrix:
         language: [ 'csharp' ]
+        configuration: [Release]
+        targetplatform: [x86, x64]
         # CodeQL supports [ 'cpp', 'csharp', 'go', 'java', 'javascript', 'python' ]
         # Learn more:
         # https://docs.github.com/en/free-pro-team@latest/github/finding-security-vulnerabilities-and-errors-in-your-code/configuring-code-scanning#changing-the-languages-that-are-analyzed
 
+    env:
+      Solution_Name: GameCaptureForDiscord.sln
+      
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
@@ -51,21 +56,22 @@ jobs:
         # Prefix the list here with "+" to use these queries and those in the config file.
         # queries: ./path/to/local/query, your-org/your-repo/queries@main
 
-    # Autobuild attempts to build any compiled languages  (C/C++, C#, or Java).
-    # If this step fails, then you should remove it and run the build manually (see below)
-    - name: Autobuild
-      uses: github/codeql-action/autobuild@v1
 
-    # ℹ️ Command-line programs to run using the OS shell.
-    # 📚 https://git.io/JvXDl
+    # Add  MSBuild to the PATH: https://github.com/microsoft/setup-msbuild
+    - name: Setup MSBuild.exe
+      uses: microsoft/setup-msbuild@v1.0.2
 
-    # ✏️ If the Autobuild fails above, remove it and uncomment the following three lines
-    #    and modify them (or add more) to build your code if your project
-    #    uses a compiled language
-
-    #- run: |
-    #   make bootstrap
-    #   make release
+    - name: Setup NuGet
+      uses: NuGet/setup-nuget@v1.0.5
+      
+    - name: Restore Packages
+      run: nuget restore $env:Solution_Name
+      
+    - name: Compile the application
+      run: msbuild $env:Solution_Name /p:platform=$env:TargetPlatform /p:configuration=$env:Configuration /p:DebugSymbols=false /p:DebugType=None
+      env:
+        Configuration: ${{ matrix.configuration }}
+        TargetPlatform: ${{ matrix.targetplatform }}
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v1
