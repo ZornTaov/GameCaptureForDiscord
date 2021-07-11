@@ -203,8 +203,8 @@ namespace GameCaptureForDiscord
                     GetCameraIndexForPartName(((ComboBox)sender).SelectedItem as string),
                     VideoCapture.API.Msmf,
                     new Tuple<CapProp, int>[] {
-                        Tuple.Create(CapProp.FrameWidth, Form1._width),
-                        Tuple.Create(CapProp.FrameHeight, Form1._height)
+                        Tuple.Create(CapProp.FrameWidth, VideoCaptureForm._width),
+                        Tuple.Create(CapProp.FrameHeight, VideoCaptureForm._height)
                     }));// causes slowdown
 
                 Program.mainForm._capture.ImageGrabbed += Program.mainForm.ProcessFrame;

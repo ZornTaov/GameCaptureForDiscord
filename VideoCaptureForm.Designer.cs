@@ -1,7 +1,7 @@
 ﻿
 namespace GameCaptureForDiscord
 {
-    partial class Form1
+    partial class VideoCaptureForm
     {
         /// <summary>
         /// Required designer variable.
@@ -62,14 +62,14 @@ namespace GameCaptureForDiscord
             this.showControlsMenuItem.Text = "Show Controls";
             this.showControlsMenuItem.Click += new System.EventHandler(this.controlsToolStripMenuItem_Click);
             // 
-            // Form1
+            // VideoCaptureForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.AutoSize = true;
             this.ClientSize = new System.Drawing.Size(1904, 1041);
             this.Controls.Add(this.captureImageBox);
-            this.Name = "Form1";
+            this.Name = "VideoCaptureForm";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Camera Capture";
             this.Load += new System.EventHandler(this.Form1_Load);

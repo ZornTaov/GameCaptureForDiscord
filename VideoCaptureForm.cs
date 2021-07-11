@@ -15,7 +15,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 namespace GameCaptureForDiscord
 {
-    public partial class Form1 : Form
+    public partial class VideoCaptureForm : Form
     {
         internal const int _width = 1920;
         internal const int _height = 1080;
@@ -30,7 +30,7 @@ namespace GameCaptureForDiscord
         internal SampleChannel sampleChannel;
         private ControlsForm controlsForm;
 
-        public Form1()
+        public VideoCaptureForm()
         {
             InitializeComponent();
             CvInvoke.UseOpenCL = false;

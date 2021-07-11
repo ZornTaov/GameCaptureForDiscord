@@ -5,7 +5,7 @@ namespace GameCaptureForDiscord
 {
     static class Program
     {
-        internal static Form1 mainForm;
+        internal static VideoCaptureForm mainForm;
 
         /// <summary>
         /// The main entry point for the application.
@@ -16,7 +16,7 @@ namespace GameCaptureForDiscord
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             SplashForm.ShowSplashScreen();
-            mainForm = new Form1();
+            mainForm = new VideoCaptureForm();
             Application.Run(mainForm);
         }
     }
