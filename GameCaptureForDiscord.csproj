@@ -96,6 +96,13 @@
     <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ControlsForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ControlsForm.Designer.cs">
+      <DependentUpon>ControlsForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="ExtensionHelpers.cs" />
     <Compile Include="Form1.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -115,6 +122,9 @@
     <Compile Include="SplashForm.Designer.cs">
       <DependentUpon>SplashForm.cs</DependentUpon>
     </Compile>
+    <EmbeddedResource Include="ControlsForm.resx">
+      <DependentUpon>ControlsForm.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Form1.resx">
       <SubType>Designer</SubType>
       <DependentUpon>Form1.cs</DependentUpon>
