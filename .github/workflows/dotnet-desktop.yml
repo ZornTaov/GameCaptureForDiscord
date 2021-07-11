@@ -52,16 +52,17 @@ jobs:
         TargetPlatform: ${{ matrix.targetplatform }}
 
     # Archive the package
-#    - name: Create archive
-#      run: Compress-Archive -Path ${{ github.workspace }}\bin\${{ matrix.targetplatform }}\${{ matrix.configuration }}\* -DestinationPath ${{ github.workspace }}\_release\GCFD_${{ matrix.targetplatform }}.zip
+    - name: Create archive
+      run: Compress-Archive -Path ${{ github.workspace }}\bin\${{ matrix.targetplatform }}\${{ matrix.configuration }}\* -DestinationPath ${{ github.workspace }}\_release\GCFD_${{ matrix.targetplatform }}.zip
     
     - name: Add Artifact
       uses: actions/upload-artifact@v2
       with:
-        name: ${{ matrix.targetplatform }}
-        path: ${{ github.workspace }}\bin\${{ matrix.targetplatform }}\${{ matrix.configuration }}\
+        name: build
+        path: ${{ github.workspace }}\_release\
+  
   upload:
-    
+  
     name: Make Releases
     needs: [build]
     runs-on: windows-latest
@@ -71,6 +72,7 @@ jobs:
     - name: Download Build Results
       uses: actions/download-artifact@v2
       with:
+        name: build
         path: build-out
 
     - name: Create GitHub Release
@@ -80,7 +82,7 @@ jobs:
         automatic_release_tag: "${{ github.event.inputs.tag }}"
         repo_token: "${{ secrets.GITHUB_TOKEN }}"
         prerelease: false
-        files: build-out/*
+        files: build-out/**/*.zip
     
     # Create the release: https://github.com/ncipollo/release-action
 #    - name: Create release
