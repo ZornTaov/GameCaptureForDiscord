@@ -17,6 +17,7 @@ using Emgu.CV.Structure;
 using Emgu.Util;
 using NAudio.CoreAudioApi;
 using NAudio.Wave;
+using NAudio.Wave.SampleProviders;
 using SharpDX.MediaFoundation;
 namespace GameCaptureForDiscord
 {
@@ -30,13 +31,10 @@ namespace GameCaptureForDiscord
         private int frameCount = 0;
         private System.Windows.Forms.Timer fpsTimer;
 
-        private ObservableCollection<string> inputDevices;
-        private ObservableCollection<string> outputDevices;
-
-        private BufferedWaveProvider bwp;
-
         WaveIn wi;
         DirectSoundOut wo;
+        private BufferedWaveProvider bwp;
+        private SampleChannel volumeSampleProvider;
 
         public Form1()
         {
@@ -44,9 +42,9 @@ namespace GameCaptureForDiscord
             CvInvoke.UseOpenCL = false;
             try
             {
-                _capture = new VideoCapture(0, VideoCapture.API.Msmf);
-                _capture.Set(CapProp.FrameWidth, _width);
-                _capture.Set(CapProp.FrameHeight, _height);
+                _capture = new VideoCapture(0, VideoCapture.API.Msmf);// causes slowdown
+                _capture.Set(CapProp.FrameWidth, _width);// causes slowdown
+                _capture.Set(CapProp.FrameHeight, _height);// causes slowdown
                 //captureImageBox.Size = new Size(1910, 1070);
                 _capture.ImageGrabbed += ProcessFrame;
             }
@@ -61,15 +59,16 @@ namespace GameCaptureForDiscord
             };
             fpsTimer.Tick += UpdateFps;
             fpsTimer.Start();
-            toolStripComboBox1.ComboBox.DataSource = ListOfAttachedCameras();
+            toolStripComboBox1.ComboBox.DataSource = ListOfAttachedCameras();// causes slowdown
             wo = new DirectSoundOut();
             wi = new WaveIn();
             wi.DataAvailable += new EventHandler<WaveInEventArgs>(wi_DataAvailable);
 
             bwp = new BufferedWaveProvider(wi.WaveFormat);
             bwp.DiscardOnBufferOverflow = true;
+            volumeSampleProvider = new SampleChannel(bwp);
 
-            wo.Init(bwp);
+            wo.Init(volumeSampleProvider);
             if (Environment.OSVersion.Version.Major >= 6)
             {
                 LoadWasapiDevicesCombo();
@@ -315,7 +314,9 @@ namespace GameCaptureForDiscord
             wi.DataAvailable += new EventHandler<WaveInEventArgs>(wi_DataAvailable);
             bwp = new BufferedWaveProvider(wi.WaveFormat);
             bwp.DiscardOnBufferOverflow = true;
-            wo.Init(bwp);
+            volumeSampleProvider = new SampleChannel(bwp);
+
+            wo.Init(volumeSampleProvider);
             Console.WriteLine("Input now: {0}, should be {1}",
                 ((WaveInCapabilities)((ToolStripComboBox)sender).SelectedItem).ProductName,
                 WaveIn.GetCapabilities(wi.DeviceNumber).ProductName);
@@ -337,15 +338,13 @@ namespace GameCaptureForDiscord
                 ((DirectSoundDeviceInfo)((ToolStripComboBox)sender).SelectedItem).Description,
                 DirectSoundOut.Devices.First(d => d.Guid == ((DirectSoundDeviceInfo)((ToolStripComboBox)sender).SelectedItem).Guid).Description);
 
-
-
             if (_captureInProgress)
                 wo.Play();
         }
 
         private void volumeSlider1_VolumeChanged(object sender, EventArgs e)
         {
-            //wo.Volume = (sender as NAudio.Gui.VolumeSlider).Volume;
+            volumeSampleProvider.Volume = (sender as NAudio.Gui.VolumeSlider).Volume;
         }
     }
 }
