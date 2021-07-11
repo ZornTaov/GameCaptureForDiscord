@@ -61,7 +61,7 @@ jobs:
     # Create the release: https://github.com/ncipollo/release-action
     - name: Create release
       id: create_release
-      uses: ncipollo/release-action
+      uses: ncipollo/release-action@v1.8.6
       env:
         Configuration: ${{ matrix.configuration }}
         TargetPlatform: ${{ matrix.targetplatform }}
