@@ -50,19 +50,20 @@ jobs:
       env:
         Configuration: ${{ matrix.configuration }}
         TargetPlatform: ${{ matrix.targetplatform }}
-        
-    # Create the release:  https://github.com/actions/create-release
+    
+    # Create the release: https://github.com/ncipollo/release-action
     - name: Create release
       id: create_release
-      uses: actions/create-release@v1
+      uses: ncipollo/release-action
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
+        Configuration: ${{ matrix.configuration }}
+        TargetPlatform: ${{ matrix.targetplatform }}
       with:
-        tag_name: ${{ github.ref}}
-        release_name: Release ${{ github.ref }}
-        draft: false
-        prerelease: false
-         
+        allowUpdates: true
+        name: Release ${{ github.ref }}
+        replacesArtifacts: false
+        token: ${{ secrets.GITHUB_TOKEN }}
+        
     # Upload release asset:   https://github.com/actions/upload-release-asset
     - name: Update release asset
       id: upload-release-asset
