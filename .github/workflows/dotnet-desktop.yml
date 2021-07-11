@@ -1,9 +1,16 @@
 name: .NET Framework Desktop
 
 on:
-  push:
-    tags:
-      - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
+  workflow_dispatch:
+    inputs:
+      name:
+        description: 'Release name'
+        required: true
+        default: 'Release'
+      tag:
+        description: 'Tag'
+        required: true
+        default: 'v'
 
 jobs:
 
@@ -60,7 +67,8 @@ jobs:
         TargetPlatform: ${{ matrix.targetplatform }}
       with:
         allowUpdates: true
-        name: Release ${{ github.ref }}
+        tag: refs/tags/${{ github.event.inputs.tag }}
+        name: ${{ github.event.inputs.name }} ${{ github.event.inputs.tag }}
         replacesArtifacts: false
         token: ${{ secrets.GITHUB_TOKEN }}
         
