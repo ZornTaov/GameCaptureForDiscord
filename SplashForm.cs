@@ -1,12 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using System.Threading;
 using System.Windows.Forms;
 
 namespace GameCaptureForDiscord
@@ -27,7 +19,11 @@ namespace GameCaptureForDiscord
         static public void ShowSplashScreen()
         {
             // Make sure it is only launched once.    
-            if (splashForm != null) return;
+            if (splashForm != null)
+            {
+                return;
+            }
+
             splashForm = new SplashForm();
             Thread thread = new Thread(new ThreadStart(SplashForm.ShowForm));
             thread.IsBackground = true;
@@ -37,7 +33,10 @@ namespace GameCaptureForDiscord
 
         static private void ShowForm()
         {
-            if (splashForm != null) Application.Run(splashForm);
+            if (splashForm != null)
+            {
+                Application.Run(splashForm);
+            }
         }
 
         static public void CloseForm()

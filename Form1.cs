@@ -1,24 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.Runtime.InteropServices.ComTypes;
-using System.Text;
-using System.Threading;
-using System.Windows;
-using System.Windows.Forms;
-using Emgu.CV;
+﻿using Emgu.CV;
 using Emgu.CV.CvEnum;
-using Emgu.CV.Structure;
-using Emgu.Util;
 using NAudio.CoreAudioApi;
 using NAudio.Wave;
 using NAudio.Wave.SampleProviders;
 using SharpDX.MediaFoundation;
+using System;
+using System.Collections.Generic;
+using System.Drawing;
+using System.Linq;
+using System.Runtime.InteropServices;
+using System.Runtime.InteropServices.ComTypes;
+using System.Threading;
+using System.Windows.Forms;
 namespace GameCaptureForDiscord
 {
     public partial class Form1 : Form
@@ -27,9 +20,9 @@ namespace GameCaptureForDiscord
         private const int _height = 1080;
         private VideoCapture _capture = null;
         private bool _captureInProgress;
-        private Mat _frame;
+        private readonly Mat _frame;
         private int frameCount = 0;
-        private System.Windows.Forms.Timer fpsTimer;
+        private readonly System.Windows.Forms.Timer fpsTimer;
 
         WaveIn wi;
         DirectSoundOut wo;
@@ -89,18 +82,21 @@ namespace GameCaptureForDiscord
                 Screen.PrimaryScreen.WorkingArea.Y + margin,
                 Screen.PrimaryScreen.WorkingArea.Width - 2 * margin,
                 Screen.PrimaryScreen.WorkingArea.Height - 2 * (margin - 7));
-            this.Bounds = rect;
+            Bounds = rect;
             MinimumSize = new System.Drawing.Size(_width, _height + 20);
             ClientSize = new System.Drawing.Size(_width, _height + 20);
             SplashForm.CloseForm();
-            this.WindowState = FormWindowState.Minimized;
-            this.WindowState = FormWindowState.Normal;
-            this.Focus(); this.Show();
+            WindowState = FormWindowState.Minimized;
+            WindowState = FormWindowState.Normal;
+            Focus(); Show();
         }
         private void ReleaseData()
         {
             if (fpsTimer != null && fpsTimer.Enabled)
+            {
                 fpsTimer?.Stop();
+            }
+
             fpsTimer?.Dispose();
             _capture?.Dispose();
             wo?.Dispose();
@@ -109,21 +105,21 @@ namespace GameCaptureForDiscord
 
         public static string[] ListOfAttachedCameras()
         {
-            var cameras = new List<string>();
-            var attributes = new MediaAttributes(1);
+            List<string> cameras = new List<string>();
+            MediaAttributes attributes = new MediaAttributes(1);
             attributes.Set(CaptureDeviceAttributeKeys.SourceType.Guid, CaptureDeviceAttributeKeys.SourceTypeVideoCapture.Guid);
-            var devices = MediaFactory.EnumDeviceSources(attributes);
-            for (var i = 0; i < devices.Count(); i++)
+            Activate[] devices = MediaFactory.EnumDeviceSources(attributes);
+            for (int i = 0; i < devices.Count(); i++)
             {
-                var friendlyName = devices[i].Get(CaptureDeviceAttributeKeys.FriendlyName);
+                string friendlyName = devices[i].Get(CaptureDeviceAttributeKeys.FriendlyName);
                 cameras.Add(friendlyName);
             }
             return cameras.ToArray();
         }
         public static int GetCameraIndexForPartName(string partName)
         {
-            var cameras = ListOfAttachedCameras();
-            for (var i = 0; i < cameras.Count(); i++)
+            string[] cameras = ListOfAttachedCameras();
+            for (int i = 0; i < cameras.Count(); i++)
             {
                 if (cameras[i].ToLower().Contains(partName.ToLower()))
                 {
@@ -134,16 +130,16 @@ namespace GameCaptureForDiscord
         }
         private void LoadWasapiDevicesCombo()
         {
-            var deviceEnum = new MMDeviceEnumerator();
+            MMDeviceEnumerator deviceEnum = new MMDeviceEnumerator();
             //var devices = deviceEnum.EnumerateAudioEndPoints(DataFlow.Render, DeviceState.Active).ToList();
-            var devices = DirectSoundOut.Devices;
+            IEnumerable<DirectSoundDeviceInfo> devices = DirectSoundOut.Devices;
             comboWasapiDevices.ComboBox.DataSource = devices;
             comboWasapiDevices.ComboBox.DisplayMember = "Description";
         }
 
         private void LoadWaveInDevicesCombo()
         {
-            var devices = Enumerable.Range(0, WaveIn.DeviceCount).Select(n => WaveIn.GetCapabilities(n)).ToArray();
+            WaveInCapabilities[] devices = Enumerable.Range(0, WaveIn.DeviceCount).Select(n => WaveIn.GetCapabilities(n)).ToArray();
 
             comboWaveInDevice.ComboBox.DataSource = devices;
             comboWaveInDevice.ComboBox.DisplayMember = "ProductName";
@@ -156,8 +152,8 @@ namespace GameCaptureForDiscord
 
         private void UpdateFps(object sender, EventArgs e)
         {
-            var fc = Interlocked.Exchange(ref frameCount, 0);
-            this.Text = $"FPS: {fc} Height: {_capture.Height} Width: {_capture.Width}";
+            int fc = Interlocked.Exchange(ref frameCount, 0);
+            Text = $"FPS: {fc} Height: {_capture.Height} Width: {_capture.Width}";
         }
 
         private void ProcessFrame(object sender, EventArgs arg)
@@ -269,14 +265,20 @@ namespace GameCaptureForDiscord
                 enumMon = null;
                 moniker = null;
             }
-            if (xcombobox.Items.Count > 0) xcombobox.SelectedIndex = 0;
+            if (xcombobox.Items.Count > 0)
+            {
+                xcombobox.SelectedIndex = 0;
+            }
         }
         #endregion //List Video Devices
 
         private void toolStripComboBox1_Click(object sender, EventArgs e)
         {
             if (_captureInProgress)
+            {
                 _capture.Pause();
+            }
+
             _capture?.Dispose();
             _capture = new VideoCapture(GetCameraIndexForPartName(((ToolStripComboBox)sender).SelectedItem as string), VideoCapture.API.Msmf);
 
@@ -286,7 +288,9 @@ namespace GameCaptureForDiscord
             _capture.ImageGrabbed += ProcessFrame;
 
             if (_captureInProgress)
+            {
                 _capture.Start();
+            }
         }
 
         private void ToolStripComboBox_DropDown(object sender, EventArgs e)
@@ -307,9 +311,12 @@ namespace GameCaptureForDiscord
         private void comboWaveInDevice_Click(object sender, EventArgs e)
         {
             if (_captureInProgress)
+            {
                 wi.StopRecording();
-            wi?.Dispose(); 
-             wi = new WaveIn(this.Handle);
+            }
+
+            wi?.Dispose();
+            wi = new WaveIn(Handle);
             wi.DeviceNumber = ((ToolStripComboBox)sender).SelectedIndex;
             wi.DataAvailable += new EventHandler<WaveInEventArgs>(wi_DataAvailable);
             bwp = new BufferedWaveProvider(wi.WaveFormat);
@@ -321,13 +328,17 @@ namespace GameCaptureForDiscord
                 ((WaveInCapabilities)((ToolStripComboBox)sender).SelectedItem).ProductName,
                 WaveIn.GetCapabilities(wi.DeviceNumber).ProductName);
             if (_captureInProgress)
+            {
                 wi.StartRecording();
+            }
         }
 
         private void comboWasapiDevices_Click(object sender, EventArgs e)
         {
             if (_captureInProgress)
+            {
                 wo.Stop();
+            }
 
             wo?.Dispose();
             /*wo = new WaveOut(this.Handle);
@@ -339,7 +350,9 @@ namespace GameCaptureForDiscord
                 DirectSoundOut.Devices.First(d => d.Guid == ((DirectSoundDeviceInfo)((ToolStripComboBox)sender).SelectedItem).Guid).Description);
 
             if (_captureInProgress)
+            {
                 wo.Play();
+            }
         }
 
         private void volumeSlider1_VolumeChanged(object sender, EventArgs e)
