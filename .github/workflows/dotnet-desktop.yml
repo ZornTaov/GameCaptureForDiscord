@@ -53,10 +53,7 @@ jobs:
 
     # Archive the package
     - name: Create archive
-      run: Compress-Archive -Path ${{ github.workspace }}\bin\$env:TargetPlatform\$env:Configuration\* -DestinationPath ${{ github.workspace }}\_release\GCFD_$env:TargetPlatform_$env:Configuration.zip
-      env:
-        Configuration: ${{ matrix.configuration }}
-        TargetPlatform: ${{ matrix.targetplatform }}
+      run: Compress-Archive -Path ${{ github.workspace }}\bin\${{ matrix.targetplatform }}\${{ matrix.configuration }}\* -DestinationPath ${{ github.workspace }}\_release\GCFD_${{ matrix.targetplatform }}_${{ matrix.configuration }}.zip
     
     # Create the release: https://github.com/ncipollo/release-action
     - name: Create release
