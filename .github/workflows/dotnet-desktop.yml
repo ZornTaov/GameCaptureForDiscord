@@ -15,7 +15,7 @@ on:
 jobs:
 
   build:
-
+    name: Compile ${{ matrix.targetplatform }}
     strategy:
       matrix:
         configuration: [Release]
@@ -52,31 +52,47 @@ jobs:
         TargetPlatform: ${{ matrix.targetplatform }}
 
     # Archive the package
-    - name: Create archive
-      run: Compress-Archive -Path ${{ github.workspace }}\bin\${{ matrix.targetplatform }}\${{ matrix.configuration }}\* -DestinationPath ${{ github.workspace }}\_release\GCFD_${{ matrix.targetplatform }}.zip
+#    - name: Create archive
+#      run: Compress-Archive -Path ${{ github.workspace }}\bin\${{ matrix.targetplatform }}\${{ matrix.configuration }}\* -DestinationPath ${{ github.workspace }}\_release\GCFD_${{ matrix.targetplatform }}.zip
     
-    # Create the release: https://github.com/ncipollo/release-action
-    - name: Create release
-      id: create_release
-      uses: ncipollo/release-action@v1.8.6
-      env:
-        Configuration: ${{ matrix.configuration }}
-        TargetPlatform: ${{ matrix.targetplatform }}
-      with:
-        allowUpdates: true
-        artifacts: "${{ github.workspace }}\\_release\\*"
-        artifactErrorsFailBuild: true
-        tag: refs/tags/${{ github.event.inputs.tag }}
-        name: ${{ github.event.inputs.name }} ${{ github.event.inputs.tag }}
-        replacesArtifacts: false
-        token: ${{ secrets.GITHUB_TOKEN }}
-
     - name: Add Artifact
       uses: actions/upload-artifact@v2
       with:
-        name: matrix.targetplatform
+        name: ${{ matrix.targetplatform }}
         path: ${{ github.workspace }}\bin\${{ matrix.targetplatform }}\${{ matrix.configuration }}\
+  upload:
+    
+    name: Make Releases
+    needs: [build]
+    runs-on: windows-latest
 
+    steps:
+    
+    - name: Download Build Results
+      uses: actions/download-artifact@v2
+      with:
+        path: build-out
+
+    - name: Create GitHub Release
+      uses: "marvinpinto/action-automatic-releases@latest"
+      with:
+        title: "${{ github.event.inputs.name }} ${{ github.event.inputs.tag }}"
+        automatic_release_tag: "${{ github.event.inputs.tag }}"
+        repo_token: "${{ secrets.GITHUB_TOKEN }}"
+        prerelease: false
+        files: build-out/*
+    
+    # Create the release: https://github.com/ncipollo/release-action
+#    - name: Create release
+#      id: create_release
+#      uses: ncipollo/release-action@v1.8.6
+#      with:
+#        allowUpdates: true
+#        tag: refs/tags/${{ github.event.inputs.tag }}
+#        name: ${{ github.event.inputs.name }} ${{ github.event.inputs.tag }}
+#        replacesArtifacts: false
+#        token: ${{ secrets.GITHUB_TOKEN }}
+        
     # Upload release asset:   https://github.com/actions/upload-release-asset
 #    - name: Update release asset
 #      id: upload-release-asset
