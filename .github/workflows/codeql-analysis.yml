@@ -68,7 +68,7 @@ jobs:
       run: nuget restore $env:Solution_Name
       
     - name: Compile the application
-      run: msbuild $env:Solution_Name /p:platform=$env:TargetPlatform /p:configuration=$env:Configuration /p:DebugSymbols=false /p:DebugType=None
+      run: msbuild $env:Solution_Name /p:UseSharedCompilation=false /p:platform=$env:TargetPlatform /p:configuration=$env:Configuration /p:DebugSymbols=false /p:DebugType=None
       env:
         Configuration: ${{ matrix.configuration }}
         TargetPlatform: ${{ matrix.targetplatform }}
