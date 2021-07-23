@@ -5,9 +5,11 @@ using NAudio.Wave;
 using NAudio.Wave.SampleProviders;
 using SharpDX.MediaFoundation;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using System.Reactive.Linq;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.ComTypes;
 using System.Threading;
@@ -21,9 +23,13 @@ namespace GameCaptureForDiscord
         internal const int _height = 1080;
         internal VideoCapture _capture = null;
         internal readonly Mat _frame;
-        internal int frameCount = 0;
+        internal int frameCountIn = 0;
+        internal int frameCountOut = 0;
+        internal double AudioDelayMS = 0;
+        internal double VideoDelayMS = 0;
         internal readonly System.Windows.Forms.Timer fpsTimer;
 
+        internal bool _captureInProgress;
         internal WaveIn wi;
         internal DirectSoundOut wo;
         internal BufferedWaveProvider bwp;
@@ -105,7 +111,7 @@ namespace GameCaptureForDiscord
 
         private void UpdateFps(object sender, EventArgs e)
         {
-            int fc = Interlocked.Exchange(ref frameCount, 0);
+            int fc = Interlocked.Exchange(ref frameCountIn, 0);
             if (_capture != null)
             {
                 Text = $"FPS: {fc} Height: {_capture.Height} Width: {_capture.Width}";
@@ -114,14 +120,89 @@ namespace GameCaptureForDiscord
 
         internal void ProcessFrame(object sender, EventArgs arg)
         {
-            if (_capture != null && _capture.Ptr != IntPtr.Zero)
-            {
-                _capture.Retrieve(_frame, 0);
+            Interlocked.Increment(ref frameCountIn);
+        }
 
-                captureImageBox.Image = _frame;
-                Interlocked.Increment(ref frameCount);
+        internal async Task SetupVideo(string sender)
+        {
+            if (_captureInProgress)
+            {
+                Program.mainForm._capture.Pause();
+            }
+
+            Program.mainForm._capture?.Dispose();
+            Program.mainForm._capture = await Task.FromResult(new VideoCapture(
+                GetCameraIndexForPartName(sender),
+                VideoCapture.API.Msmf,
+                new Tuple<CapProp, int>[] {
+                        Tuple.Create(CapProp.HwAcceleration, (int)VideoAccelerationType.Any),
+                        Tuple.Create(CapProp.FrameWidth, _width),
+                        Tuple.Create(CapProp.FrameHeight, _height)
+                }));// causes slowdown
+
+            var framesObs = Observable.FromEventPattern(
+                addHandler: h => Program.mainForm._capture.ImageGrabbed += h,
+                removeHandler: h => Program.mainForm._capture.ImageGrabbed -= h
+            ).Select(f =>
+            {
+                if (_capture != null && _capture.Ptr != IntPtr.Zero)
+                {
+                    Mat frame = new Mat();
+                    _capture.Retrieve(frame, 0);
+                    //captureImageBox.Image = _frame;
+                    return frame;
+                }
+                return null;
+            })
+            .Where(f => f != null)
+            //.Append(default)
+            //.Scan((p,c) => { p?.Dispose(); return c; })
+            .Delay(_ => Observable.Timer(TimeSpan.FromMilliseconds(VideoDelayMS)) );
+
+            framesObs.Subscribe(f =>
+            {
+                captureImageBox.Image?.Dispose();
+                captureImageBox.Image = f;
+            });
+
+            Program.mainForm._capture.ImageGrabbed += Program.mainForm.ProcessFrame;
+
+            Program.mainForm.ClientSize = new Size(Program.mainForm._capture.Width, Program.mainForm._capture.Height);
+
+            if (_captureInProgress)
+            {
+                Program.mainForm._capture.Start();
             }
         }
+
+        #region Enumerations
+        public static string[] ListOfAttachedCameras()
+        {
+            List<string> cameras = new List<string>();
+            MediaAttributes attributes = new MediaAttributes(1);
+            attributes.Set(CaptureDeviceAttributeKeys.SourceType.Guid, CaptureDeviceAttributeKeys.SourceTypeVideoCapture.Guid);
+            Activate[] devices = MediaFactory.EnumDeviceSources(attributes);
+            for (int i = 0; i < devices.Count(); i++)
+            {
+                string friendlyName = devices[i].Get(CaptureDeviceAttributeKeys.FriendlyName);
+                cameras.Add(friendlyName);
+            }
+            return cameras.ToArray();
+        }
+
+        public static int GetCameraIndexForPartName(string partName)
+        {
+            string[] cameras = ListOfAttachedCameras();
+            for (int i = 0; i < cameras.Count(); i++)
+            {
+                if (cameras[i].ToLower().Contains(partName.ToLower()))
+                {
+                    return i;
+                }
+            }
+            return -1;
+        }
+        #endregion
 
         private void controlsToolStripMenuItem_Click(object sender, EventArgs e)
         {

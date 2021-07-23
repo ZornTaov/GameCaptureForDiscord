@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using System.Reactive.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 namespace GameCaptureForDiscord
@@ -14,7 +15,6 @@ namespace GameCaptureForDiscord
     public partial class ControlsForm : Form
     {
         private bool loaded = false;
-        internal bool _captureInProgress;
         public ControlsForm()
         {
             InitializeComponent();
@@ -32,7 +32,7 @@ namespace GameCaptureForDiscord
 
         private async void ControlsForm_Load(object sender, EventArgs e)
         {
-            comboVideoDevices.DataSource = await Task.FromResult(ListOfAttachedCameras());// causes slowdown
+            comboVideoDevices.DataSource = await Task.FromResult(VideoCaptureForm.ListOfAttachedCameras());// causes slowdown
             loaded = true;
             SetupSoundDrivers();
             SplashForm.CloseForm();
@@ -49,33 +49,7 @@ namespace GameCaptureForDiscord
             Focus();
         }
 
-
         #region Enumerations
-        public static string[] ListOfAttachedCameras()
-        {
-            List<string> cameras = new List<string>();
-            MediaAttributes attributes = new MediaAttributes(1);
-            attributes.Set(CaptureDeviceAttributeKeys.SourceType.Guid, CaptureDeviceAttributeKeys.SourceTypeVideoCapture.Guid);
-            Activate[] devices = MediaFactory.EnumDeviceSources(attributes);
-            for (int i = 0; i < devices.Count(); i++)
-            {
-                string friendlyName = devices[i].Get(CaptureDeviceAttributeKeys.FriendlyName);
-                cameras.Add(friendlyName);
-            }
-            return cameras.ToArray();
-        }
-        public static int GetCameraIndexForPartName(string partName)
-        {
-            string[] cameras = ListOfAttachedCameras();
-            for (int i = 0; i < cameras.Count(); i++)
-            {
-                if (cameras[i].ToLower().Contains(partName.ToLower()))
-                {
-                    return i;
-                }
-            }
-            return -1;
-        }
         private void LoadWasapiDevicesCombo()
         {
             //MMDeviceEnumerator deviceEnum = new MMDeviceEnumerator();
@@ -100,7 +74,7 @@ namespace GameCaptureForDiscord
             if (!loaded) return;
             Program.mainForm.Invoke(() =>
             {
-                if (_captureInProgress)
+                if (Program.mainForm._captureInProgress)
                 {
                     Program.mainForm.wi.StopRecording();
                     Program.mainForm.wo.Stop();
@@ -117,9 +91,12 @@ namespace GameCaptureForDiscord
                 Program.mainForm.bwp.DiscardOnBufferOverflow = true;
 
                 Program.mainForm.sampleChannel = new SampleChannel(Program.mainForm.bwp);
-
+                var delay = new OffsetSampleProvider(Program.mainForm.sampleChannel)
+                {
+                    DelayBy = TimeSpan.FromMilliseconds(Program.mainForm.AudioDelayMS)
+                };
                 Program.mainForm.wo = new DirectSoundOut(((DirectSoundDeviceInfo)comboWasapiDevices.SelectedItem).Guid);
-                Program.mainForm.wo.Init(Program.mainForm.sampleChannel);
+                Program.mainForm.wo.Init(delay);
 
                 Console.WriteLine("Input now: {0}, should be {1}",
                     ((WaveInCapabilities)comboWaveInDevice.SelectedItem).ProductName,
@@ -128,7 +105,7 @@ namespace GameCaptureForDiscord
                     ((DirectSoundDeviceInfo)comboWasapiDevices.SelectedItem).Description,
                     DirectSoundOut.Devices.First(d => d.Guid == ((DirectSoundDeviceInfo)comboWasapiDevices.SelectedItem).Guid).Description);
 
-                if (_captureInProgress)
+                if (Program.mainForm._captureInProgress)
                 {
                     Program.mainForm.sampleChannel.Volume = volumeSlider1.Volume;
                     Program.mainForm.wi.StartRecording();
@@ -145,7 +122,7 @@ namespace GameCaptureForDiscord
             {
                 if (Program.mainForm._capture != null)
                 {
-                    if (_captureInProgress)
+                    if (Program.mainForm._captureInProgress)
                     {  //stop the capture
                         startCaptureButton.Text = "Start Capture";
                         Program.mainForm._capture.Pause();
@@ -161,7 +138,7 @@ namespace GameCaptureForDiscord
                         Program.mainForm.wo.Play();
                     }
 
-                    _captureInProgress = !_captureInProgress;
+                    Program.mainForm._captureInProgress = !Program.mainForm._captureInProgress;
                 }
             });
         }
@@ -194,28 +171,7 @@ namespace GameCaptureForDiscord
         {
             Program.mainForm.Invoke(async () =>
             {
-                if (_captureInProgress)
-                {
-                    Program.mainForm._capture.Pause();
-                }
-
-                Program.mainForm._capture?.Dispose();
-                Program.mainForm._capture = await Task.FromResult(new VideoCapture(
-                    GetCameraIndexForPartName(((ComboBox)sender).SelectedItem as string),
-                    VideoCapture.API.Msmf,
-                    new Tuple<CapProp, int>[] {
-                        Tuple.Create(CapProp.FrameWidth, VideoCaptureForm._width),
-                        Tuple.Create(CapProp.FrameHeight, VideoCaptureForm._height)
-                    }));// causes slowdown
-
-                Program.mainForm._capture.ImageGrabbed += Program.mainForm.ProcessFrame;
-
-                Program.mainForm.ClientSize = new Size(Program.mainForm._capture.Width, Program.mainForm._capture.Height);
-
-                if (_captureInProgress)
-                {
-                    Program.mainForm._capture.Start();
-                }
+                await Program.mainForm.SetupVideo(comboVideoDevices.SelectedItem as string);
             });
         }
 
@@ -233,9 +189,27 @@ namespace GameCaptureForDiscord
         {
             Program.mainForm.Invoke(() =>
             {
-                Program.mainForm.sampleChannel.Volume = (sender as NAudio.Gui.VolumeSlider).Volume;
+                Program.mainForm.sampleChannel.Volume = volumeSlider1.Volume;
             });
         }
+
+        private void numericVideoDelay_ValueChanged(object sender, EventArgs e)
+        {
+            Program.mainForm.Invoke(() =>
+            {
+                Program.mainForm.VideoDelayMS = (double)numericVideoDelay.Value;
+            });
+        }
+
+        private void numericAudioDelay_ValueChanged(object sender, EventArgs e)
+        {
+            Program.mainForm.Invoke(() =>
+            {
+                Program.mainForm.AudioDelayMS = (double)numericAudioDelay.Value;
+            });
+            SetupSoundDrivers();
+        }
         #endregion
+
     }
 }
