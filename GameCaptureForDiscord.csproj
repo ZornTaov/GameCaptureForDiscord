@@ -165,7 +165,7 @@
       <Version>4.5.2.4673</Version>
     </PackageReference>
     <PackageReference Include="Emgu.CV.Bitmap">
-      <Version>4.5.2.4673</Version>
+      <Version>4.5.3.4721</Version>
     </PackageReference>
     <PackageReference Include="Emgu.CV.runtime.windows">
       <Version>4.5.2.4673</Version>
