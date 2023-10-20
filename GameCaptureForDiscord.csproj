@@ -171,7 +171,7 @@
       <Version>4.8.0.5324</Version>
     </PackageReference>
     <PackageReference Include="Emgu.CV.UI">
-      <Version>4.7.0.5276</Version>
+      <Version>4.8.0.5324</Version>
     </PackageReference>
     <PackageReference Include="NAudio">
       <Version>2.2.1</Version>
