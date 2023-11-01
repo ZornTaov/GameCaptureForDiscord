@@ -162,7 +162,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Emgu.CV">
-      <Version>4.8.0.5324</Version>
+      <Version>4.8.1.5350</Version>
     </PackageReference>
     <PackageReference Include="Emgu.CV.Bitmap">
       <Version>4.8.0.5324</Version>
